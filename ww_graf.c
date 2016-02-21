@@ -2,11 +2,12 @@
 
 extern WINDOW *stdscr;
 WINDOW *mpanel[3];
-//extern int end;
+extern int end;
 
 //инициализируем экран как обычно
 void InitScreen(void)
 {
+    end=0;
     initscr();
     cbreak();
     noecho();
@@ -77,7 +78,7 @@ void PrintClient(int pos,long int pid)
     PrintStr(pos,1,NULL,pid);
 }
 
-//очистка панели, 0/1 также
+//очистка панели, 0/1/2 по номерам панелей
 void ClearPanel(int panel)
 {
     wclear(mpanel[panel]);
@@ -118,17 +119,18 @@ void GetMessage(char *str)
     str[getmaxx(mpanel[2])-2]='\0';
 }
 
+//циклический ввод и отправка сообщений
 void MessageType(void)
 {
     int ch,x,y,i=0;//,j=1;
     char message[getmaxx(mpanel[2])-1];
-    while((ch=wgetch(mpanel[2]))!=KEY_F(5))
+    while((ch=wgetch(mpanel[2]))!=KEY_F(5)&&end==0)
     {
         wrefresh(mpanel[2]);
+        //обработка enter
         if(ch==10)
         {
             GetMessage(message);
-            //PrintMsg(j++,message);
             ClearPanel(2);
             wmove(mpanel[2],1,1);
             i=0;
@@ -152,6 +154,7 @@ void MessageType(void)
         }
         else
         {
+            //не даем печатать за границу
             if(i>=getmaxx(mpanel[2])-2)
             {
                 continue;
@@ -162,10 +165,12 @@ void MessageType(void)
     }
 }
 
+//добавить клиента на панель
 void AddClient(long pid)
 {
     int pos;
     char s;
+    //ищем первую свободную строку по пробелу
     for(pos=1;pos<200;pos++)
     {
         s=mvwinch(mpanel[1],pos,1);
@@ -177,11 +182,13 @@ void AddClient(long pid)
     PrintClient(pos,pid);
 }
 
+//удаление клиента с указанного номера позиции
 void RemoveClient(int pos)
 {
     int i,p;
     p=pos;
     char c,st='q';
+    //начиная с заданной позиции просто циклически затираем текущую строку нижней
     while(st!=' ')
     {
         wmove(mpanel[1],p,1);
@@ -199,10 +206,12 @@ void RemoveClient(int pos)
         p++;
         st=mvwinch(mpanel[1],p,1);
     }
-    //wprintw(mpanel[1],"          ");
     wrefresh(mpanel[1]);
 }
 
+//проверка наличия клиента
+//на входе pid клиента, на выходе 0 при отсутствии такого и позиция записи при
+//нахождении
 int CheckClient(long pid)
 {
     int pos,i;

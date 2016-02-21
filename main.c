@@ -1,10 +1,13 @@
 /*
- * при компил€ции сервера указывать ключ -D server , файлы ww_que.c main.c
- * при компил€ции клиента указывать ключ -D chat , файлы main.c ww_graf.c ww_thr.c ps_clients.c
+ * при компил€ции сервера указывать ключи -D server -lpthread, файлы ww_que.c main.c
+ * при компил€ции клиента указывать ключи -D chat -lpthread -lncurses, файлы main.c ww_graf.c ww_thr.c ps_clients.c
  *
  * */
 
 #include "service.h"
+
+extern int end;
+extern pthread_t msgwait,trmwait,swait;
 
 int main(void)
 {
@@ -12,7 +15,10 @@ int main(void)
     InitScreen();
     InitSystem();
     MessageType();
-    ClientConnectChat(0);
+    if(!end)
+    {
+        ClientConnectChat(0);
+    }
     DeleteScreen();
     printf("chat successfully ended\n");
 #endif

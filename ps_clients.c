@@ -1,16 +1,13 @@
 #include "service.h"
 
-pthread_t msgwait,trmwait,swait,hwait;
-int my_number,member_list_pos;
-//extern int end;
-//потом убрать
-//extern WINDOW *mpanel[3];
+pthread_t msgwait,trmwait,swait;
+int my_number;
+extern int end;
 
+//инициализация системы
 void InitSystem(void)
 {
-    //int arg1,arg2;
-   // arg1=0;arg2=1;
-    member_list_pos=1;
+    //подклбчаемся к чату
     my_number=ClientConnectChat(1);
     if(my_number==-1)
     {
@@ -18,15 +15,15 @@ void InitSystem(void)
         DeleteScreen();
         exit(1);
     }
+    end=0;
+    //создаем потоки, которые будут отслеживать появление сообщений в очереди
     pthread_create(&msgwait,NULL,MsgProcessor,NULL);
     pthread_create(&trmwait,NULL,TrmProcessor,NULL);
     pthread_create(&swait,NULL,ShowHideProcessor,NULL);
-   // pthread_create(&hwait,NULL,ShowHideProcessor,&arg2);
 }
 
-
-
-//при регистрации указывать 1, при отклбчении 0
+//при регистрации type указывать 1, при отклбчении 0
+//возвращаемое значение: -1 на ошибку, присвоенный номер при успешном завершении
 int ClientConnectChat(int type)
 {
     key_t key;
@@ -44,10 +41,12 @@ int ClientConnectChat(int type)
     }
     msg1.mtype=CONNECT_REQUEST;
     msg1.pid=pid;
+    //если подключаемся - обозначаем себя как незарегистрированного
     if(type)
     {
         msg1.registered=0;
     }
+    //иначе отправляем свой номер
     else
     {
         msg1.registered=my_number;
@@ -58,6 +57,7 @@ int ClientConnectChat(int type)
         perror("client failed to connect chat:send\n");
         return -1;
     }
+    //ждем отклика от сервера
     if(type)
     {
         chk=msgrcv(qid,&msg1,sizeof(msg1),SHOW_MEMBER,0);
@@ -71,6 +71,7 @@ int ClientConnectChat(int type)
         perror("client failed to connect chat:receive\n");
         return -1;
     }
+    //добавляем клиента
     if(type)
     {
         //на случай если кто-то проскочит раньше в очереди, тогда просто печатаем их имена
@@ -86,27 +87,18 @@ int ClientConnectChat(int type)
         }
         AddClient(msg1.pid);
     }
-//    else
-//    {
-//        while(pid!=msg1.pid)
-//        {
-//            PrintClient(member_list_pos++,"somename diconnected");
-//            chk=msgrcv(qid,&msg1,sizeof(msg1),HIDE_MEMBER,0);
-//            if(chk==-1)
-//            {
-//                perror("client failed to connect chat:receive another\n");
-//                return -1;
-//            }
-//        }
-//        PrintClient(member_list_pos++,"i'm disconnected");
-//    }
+    //если отклбчались, то ничего не делаем
     return msg1.registered;
 }
 
-
-
+//отправка сообщения клиенту с текстом msg
 void ClientSendMsg(char* msg)
 {
+    if(strlen(msg)>MSG_MAX_SZ)
+    {
+        printf("send error: too big\n");
+        return;
+    }
     key_t key;
     pid_t pid;
     pid=getpid();

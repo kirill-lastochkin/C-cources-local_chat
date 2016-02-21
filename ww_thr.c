@@ -1,8 +1,9 @@
 #include "service.h"
 
-//int end;
 extern int my_number;
+int end;
 
+//поток-обработчик сообщений с текстом
 void* MsgProcessor(void *arg)
 {
     key_t key;
@@ -15,8 +16,9 @@ void* MsgProcessor(void *arg)
         perror("no queue\n");
         return NULL;
     }
-    while(1)
+    while(end==0)
     {
+        //получаем сообщение - печатаем его
         chk=msgrcv(qid,&msg1,sizeof(msg1),MSGFOR(my_number),0);
         if(chk!=-1)
         {
@@ -25,6 +27,7 @@ void* MsgProcessor(void *arg)
     }
 }
 
+//поток-обработчик сигнала завершения
 void* TrmProcessor(void *arg)
 {
     key_t key;
@@ -37,21 +40,21 @@ void* TrmProcessor(void *arg)
         perror("no queue\n");
         return NULL;
     }
-    while(1)
+    while(end==0)
     {
-        chk=msgrcv(qid,&msg1,sizeof(msg1),TERMINATE,0);
+        chk=msgrcv(qid,&msg1,sizeof(msg1),TERMFOR(my_number),0);
         if(chk!=-1)
         {
-            pthread_kill(pthread_self(),SIGTERM);
+            end=1;
+            break;
         }
     }
+    printf("i'm out\n");
 }
 
 
 void* ShowHideProcessor(void *arg)
 {
-//    int arg1;
-//    arg1=*((int*)arg);
     key_t key;
     struct My_msg msg1;
     int qid,chk;
@@ -62,7 +65,7 @@ void* ShowHideProcessor(void *arg)
         perror("no queue\n");
         return NULL;
     }
-    while(1)
+    while(end==0)
     {
         //ждем сообщения о коннекте-дисконнекте для себя
         chk=msgrcv(qid,&msg1,sizeof(msg1),SHFOR(my_number),0);

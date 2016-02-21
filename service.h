@@ -17,24 +17,28 @@
 #include <sys/syscall.h>
 #include <errno.h>
 
+//описание типов сообщений для системных запросов
 #define CONNECT_REQUEST 101L
 #define DISCONNECT_REQUEST 102L
 #define MESSAGE 103L
 #define SHOW_MEMBER 104L
 #define HIDE_MEMBER 105L
-#define TERMINATE 106L
+#define TERMFOR(x) 300L+(long)x
 #define MSGFOR(x) (long)x
 #define SHFOR(x) (long)x+200L
+//параметры для ftok
 #define FTOK_PATH "/home/"
 #define FTOK_INT 'w'
+//максимальная длина текста сообщения
 #define MSG_MAX_SZ 120
 
+//описание сообщения
 struct My_msg
 {
     long mtype;
-    char msg[MSG_MAX_SZ];
-    pid_t pid;
-    int registered;
+    char msg[MSG_MAX_SZ]; //текст сообщения
+    pid_t pid;       //поле для пида отправителя сообщения
+    int registered;  //поле для передачи номера регистрации
 };
 
 //----------------------серверная часть----------------------------
