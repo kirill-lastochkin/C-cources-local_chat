@@ -1,6 +1,6 @@
 #include "service.h"
 
-pthread_t msgwait,trmwait,swait;
+pthread_t msgwait,swait;
 int my_number;
 extern int end;
 
@@ -16,9 +16,9 @@ void InitSystem(void)
         exit(1);
     }
     end=0;
+    signal(SIGUSR2,Usr2Handler);
     //создаем потоки, которые будут отслеживать появление сообщений в очереди
     pthread_create(&msgwait,NULL,MsgProcessor,NULL);
-    pthread_create(&trmwait,NULL,TrmProcessor,NULL);
     pthread_create(&swait,NULL,ShowHideProcessor,NULL);
 }
 
@@ -120,4 +120,11 @@ void ClientSendMsg(char* msg)
         perror("message send err\n");
         return;
     }
+}
+
+void Usr2Handler(int a)
+{
+    pthread_cancel(msgwait);
+    pthread_cancel(swait);
+    end=1;
 }

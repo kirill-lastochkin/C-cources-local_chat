@@ -86,11 +86,11 @@ int ClientConnectChat(int type);
 //отправка сообщения на сервер
 void ClientSendMsg(char* msg);
 
+void Usr2Handler(int a);
+
 //потоки
 //поток обрабатывающий сообщения
 void* MsgProcessor(void *arg);
-//поток обрабатывающий сообщение о завершении
-void* TrmProcessor(void *arg);
 //поток обрабатывающий сообщения о появлении/исчезновении клиентов в чате
 void* ShowHideProcessor(void *arg);
 #endif

@@ -27,31 +27,6 @@ void* MsgProcessor(void *arg)
     }
 }
 
-//поток-обработчик сигнала завершения
-void* TrmProcessor(void *arg)
-{
-    key_t key;
-    struct My_msg msg1;
-    int qid,chk;
-    key=ftok(FTOK_PATH,FTOK_INT);
-    qid=msgget(key,0);
-    if(qid==-1)
-    {
-        perror("no queue\n");
-        return NULL;
-    }
-    while(end==0)
-    {
-        chk=msgrcv(qid,&msg1,sizeof(msg1),TERMFOR(my_number),0);
-        if(chk!=-1)
-        {
-            end=1;
-            break;
-        }
-    }
-    printf("i'm out\n");
-}
-
 
 void* ShowHideProcessor(void *arg)
 {

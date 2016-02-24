@@ -7,7 +7,7 @@
 #include "service.h"
 
 extern int end;
-extern pthread_t msgwait,trmwait,swait;
+extern pthread_t msgwait,swait;
 
 int main(void)
 {
@@ -20,7 +20,14 @@ int main(void)
         ClientConnectChat(0);
     }
     DeleteScreen();
-    printf("chat successfully ended\n");
+    if(end==0)
+    {
+        printf("chat successfully ended\n");
+    }
+    else
+    {
+        printf("server disconnected\n");
+    }
 #endif
 #ifdef server
     int qid;

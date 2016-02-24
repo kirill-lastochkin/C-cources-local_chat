@@ -46,18 +46,14 @@ int ProcInit(void)
     pthread_create(&msgproc,NULL,ProcFunc,&key);
     pthread_create(&conproc,NULL,ConFunc,&key);
     pthread_join(conproc,NULL);
-    //pthread_join(msgproc,NULL);
+    pthread_join(msgproc,NULL);
+    printf("end init\n");
     return qid;
 }
 
 //удаление очереди по qid
 void QueueDelete(int qid)
 {
-    int chk=-2;
-    struct My_msg msg1;
-    //вытаскиваем оставшиеся сообщения
-    while(chk!=-1)
-    chk=msgrcv(qid,&msg1,sizeof(msg1),0,0);
     msgctl(qid,IPC_RMID,NULL);
     printf("queue deleted\n");
 }
@@ -78,7 +74,14 @@ void* ProcFunc(void *arg)
         chk=msgrcv(qid,&msg1,sizeof(msg1),MESSAGE,0);
         if(chk==-1)
         {
-            perror("receive error\n");
+            if(end==0)
+            {
+                perror("receive error\n");
+            }
+            else
+            {
+                break;
+            }
         }
         else
         {
@@ -116,7 +119,14 @@ void* ConFunc(void *arg)
         chk=msgrcv(qid,&msg1,sizeof(msg1),CONNECT_REQUEST,0);
         if(chk==-1)
         {
-            perror("receive error\n");
+            if(end==0)
+            {
+                perror("receive error\n");
+            }
+            else
+            {
+                break;
+            }
         }
         else
         {
@@ -207,10 +217,20 @@ void* ConFunc(void *arg)
 //флаг end прекращает выполенение цикла, что приводит к завершению всей работы
 void IntHandler(int arg)
 {
+    int i;
     end=1;
     arg++;
-    pthread_kill(conproc,SIGUSR1);
-    pthread_kill(msgproc,SIGUSR1);
+    //pthread_kill(conproc,SIGUSR1);
+    //pthread_kill(msgproc,SIGUSR1);
+    pthread_cancel(conproc);
+    pthread_cancel(msgproc);
+    for(i=0;i<MAX_NUM_OF_CLIENTS;i++)
+    {
+        if(clients[i][0]!=0)
+        {
+            kill((pid_t)clients[i][1],SIGUSR2);
+        }
+    }
 }
 
 //прерывание просто чтобы прервать msgrcv
